@@ -22,8 +22,8 @@ rootProject.allprojects {
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 33
     namespace 'com.mathrawk.libphonenumber'
+    compileSdkVersion 33
 
     defaultConfig {
         minSdkVersion 16
