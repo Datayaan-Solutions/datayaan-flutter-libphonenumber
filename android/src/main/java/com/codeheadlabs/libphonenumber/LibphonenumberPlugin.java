@@ -7,6 +7,7 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+//import io.flutter.plugin.common.PluginRegistry.Registrar;
 
 import com.google.i18n.phonenumbers.AsYouTypeFormatter;
 import com.google.i18n.phonenumbers.NumberParseException;
@@ -18,55 +19,26 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * LibphonenumberPlugin
- * 
- * A Flutter plugin for native phone number functionality on Android.
- * Implements the new Flutter Plugin API (v2) while maintaining backward compatibility.
- */
-public class LibphonenumberPlugin implements FlutterPlugin, MethodCallHandler {
-  private static final String CHANNEL_NAME = "codeheadlabs.com/libphonenumber";
-
-  // The MethodChannel used to communicate with the Flutter engine
-  private MethodChannel channel;
-
-  // PhoneNumberUtil instance used for phone number operations
+/** LibphonenumberPlugin */
+public class LibphonenumberPlugin implements MethodCallHandler, FlutterPlugin {
   private static PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
-
-  // Mapper to get carrier information for phone numbers
   private static PhoneNumberToCarrierMapper phoneNumberToCarrierMapper = PhoneNumberToCarrierMapper.getInstance();
 
-  /**
-   * Plugin registration method for apps using the v2 embedding
-   */
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
-    setupChannel(binding.getBinaryMessenger());
+    final MethodChannel channel = new MethodChannel(binding.getBinaryMessenger(), "codeheadlabs.com/libphonenumber");
+    channel.setMethodCallHandler(new LibphonenumberPlugin());
   }
 
-  /**
-   * Clean up resources when the plugin is detached from the engine
-   */
   @Override
   public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
-    teardownChannel();
   }
 
-  /**
-   * Sets up the method channel and registers this instance as the handler
-   */
-  private void setupChannel(Object messenger) {
-    channel = new MethodChannel((io.flutter.plugin.common.BinaryMessenger) messenger, CHANNEL_NAME);
-    channel.setMethodCallHandler(this);
-  }
-
-  /**
-   * Cleans up the method channel
-   */
-  private void teardownChannel() {
-    channel.setMethodCallHandler(null);
-    channel = null;
-  }
+//  /** Keeping around to support older apps that aren't using v2 Android embedding */
+//  public static void registerWith(Registrar registrar) {
+//    final MethodChannel channel = new MethodChannel(registrar.messenger(), "codeheadlabs.com/libphonenumber");
+//    channel.setMethodCallHandler(new LibphonenumberPlugin());
+//  }
 
   @Override
   public void onMethodCall(MethodCall call, Result result) {
@@ -83,17 +55,11 @@ public class LibphonenumberPlugin implements FlutterPlugin, MethodCallHandler {
       case "getNumberType":
         handleGetNumberType(call, result);
         break;
-      case "getExampleNumber":
-        handleGetExampleNumber(call, result);
-        break;
       case "formatAsYouType":
         formatAsYouType(call, result);
         break;
       case "getNameForNumber":
         handleGetNameForNumber(call, result);
-        break;
-      case "format":
-        handleFormat(call, result);
         break;
       default:
         result.notImplemented();
@@ -110,20 +76,6 @@ public class LibphonenumberPlugin implements FlutterPlugin, MethodCallHandler {
       result.success(phoneNumberToCarrierMapper.getNameForNumber(p, Locale.getDefault()));
     } catch (NumberParseException e) {
       result.error("NumberParseException", e.getMessage(), null);
-    }
-  }
-
-  private void handleFormat(MethodCall call, Result result) {
-    final String phoneNumber = call.argument("phone_number");
-    final String isoCode = call.argument("iso_code");
-    final String format = call.argument("format");
-
-    try {
-      Phonenumber.PhoneNumber p = phoneUtil.parse(phoneNumber, isoCode.toUpperCase());
-      PhoneNumberUtil.PhoneNumberFormat phoneNumberFormat = PhoneNumberUtil.PhoneNumberFormat.valueOf(format);
-      result.success(phoneUtil.format(p, phoneNumberFormat));
-    } catch (Exception e) {
-      result.error("Exception", e.getMessage(), null);
     }
   }
 
@@ -170,19 +122,6 @@ public class LibphonenumberPlugin implements FlutterPlugin, MethodCallHandler {
     } catch (NumberParseException e) {
       result.error("NumberParseException", e.getMessage(), null);
     }
-  }
-
-  private void handleGetExampleNumber(MethodCall call, Result result) {
-    final String isoCode = call.argument("iso_code");
-    Phonenumber.PhoneNumber p = phoneUtil.getExampleNumber(isoCode);
-    String regionCode = phoneUtil.getRegionCodeForNumber(p);
-    String formattedNumber = phoneUtil.format(p, PhoneNumberUtil.PhoneNumberFormat.NATIONAL);
-
-    Map<String, String> resultMap = new HashMap<String, String>();
-    resultMap.put("isoCode", regionCode);
-    resultMap.put("formattedPhoneNumber", formattedNumber);
-    result.success(resultMap);
-
   }
 
   private void handleGetNumberType(MethodCall call, Result result) {
