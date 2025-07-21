@@ -4,7 +4,7 @@
 #import "NBAsYouTypeFormatter.h"
 
 @interface LibphonenumberPlugin ()
-@property(nonatomic, retain) NBPhoneNumberUtil *phoneUtil;
+// Remove the phoneUtil property since we'll use the shared instance directly
 @end
 
 @implementation LibphonenumberPlugin
@@ -13,13 +13,14 @@
                                                                 binaryMessenger:[registrar messenger]];
     
     LibphonenumberPlugin* instance = [[LibphonenumberPlugin alloc] init];
-    instance.phoneUtil = [[NBPhoneNumberUtil alloc] init];  // ✅ This should work for most versions
+    // Remove the phoneUtil initialization - we'll use [NBPhoneNumberUtil sharedInstance] directly
     
     [registrar addMethodCallDelegate:instance channel:channel];
 }
 
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
     NSError *err = nil;
+    NBPhoneNumberUtil *phoneUtil = [NBPhoneNumberUtil sharedInstance];  // Get shared instance directly
     
     NSString *phoneNumber = call.arguments[@"phone_number"];
     NSString *isoCode = call.arguments[@"iso_code"];
@@ -33,7 +34,7 @@
     }
     
     if (phoneNumber != nil) {
-        number = [self.phoneUtil parse:phoneNumber defaultRegion:isoCode error:&err];
+        number = [phoneUtil parse:phoneNumber defaultRegion:isoCode error:&err];
         if (err != nil) {
             result([FlutterError errorWithCode:@"invalid_phone_number" message:@"Invalid Phone Number" details:nil]);
             return;
@@ -41,10 +42,10 @@
     }
 
     if ([@"isValidPhoneNumber" isEqualToString:call.method]) {
-        NSNumber *validNumber = [NSNumber numberWithBool:[self.phoneUtil isValidNumber:number]];
+        NSNumber *validNumber = [NSNumber numberWithBool:[phoneUtil isValidNumber:number]];
         result(validNumber);
     } else if ([@"normalizePhoneNumber" isEqualToString:call.method]) {
-        NSString *normalizedNumber = [self.phoneUtil format:number
+        NSString *normalizedNumber = [phoneUtil format:number
                                                numberFormat:NBEPhoneNumberFormatE164
                                                       error:&err];
         if (err != nil) {
@@ -55,9 +56,9 @@
         }
         result(normalizedNumber);
     } else if ([@"getRegionInfo" isEqualToString:call.method]) {
-        NSString *regionCode = [self.phoneUtil getRegionCodeForNumber:number];
-        NSNumber *countryCode = [self.phoneUtil getCountryCodeForRegion:regionCode];
-        NSString *formattedNumber = [self.phoneUtil format:number
+        NSString *regionCode = [phoneUtil getRegionCodeForNumber:number];
+        NSNumber *countryCode = [phoneUtil getCountryCodeForRegion:regionCode];
+        NSString *formattedNumber = [phoneUtil format:number
                                               numberFormat:NBEPhoneNumberFormatNATIONAL
                                                      error:&err];
         if (err != nil ) {
@@ -72,9 +73,9 @@
                  @"formattedPhoneNumber": formattedNumber == nil ? @"" : formattedNumber,
                  });
     } else if([@"getExampleNumber" isEqualToString:call.method]) {
-         NBPhoneNumber *exampleNumber = [self.phoneUtil getExampleNumber:isoCode error:&err];
-         NSString *regionCode = [self.phoneUtil getRegionCodeForNumber:exampleNumber];
-         NSString *formattedNumber = [self.phoneUtil format:exampleNumber
+         NBPhoneNumber *exampleNumber = [phoneUtil getExampleNumber:isoCode error:&err];
+         NSString *regionCode = [phoneUtil getRegionCodeForNumber:exampleNumber];
+         NSString *formattedNumber = [phoneUtil format:exampleNumber
                                               numberFormat:NBEPhoneNumberFormatNATIONAL
                                                      error:&err];
          if (err != nil ) {
@@ -88,7 +89,7 @@
                   @"formattedPhoneNumber": formattedNumber == nil ? @"" : formattedNumber,
                   });
     } else if ([@"getNumberType" isEqualToString:call.method]) {
-        NSNumber *numberType = [NSNumber numberWithInteger:[self.phoneUtil getNumberType:number]];
+        NSNumber *numberType = [NSNumber numberWithInteger:[phoneUtil getNumberType:number]];
         result(numberType);
     } else if ([@"getNameForNumber" isEqualToString:call.method]) {
         NSString *name = @"";  // Placeholder, actual implementation required if needed.
@@ -96,13 +97,13 @@
     } else if ([@"format" isEqualToString:call.method]) {
         NSString *formattedNumber;
         if ([@"NATIONAL" isEqualToString:formatEnumString]) {
-            formattedNumber = [self.phoneUtil format:number numberFormat:NBEPhoneNumberFormatNATIONAL error:&err];
+            formattedNumber = [phoneUtil format:number numberFormat:NBEPhoneNumberFormatNATIONAL error:&err];
         } else if([@"INTERNATIONAL" isEqualToString:formatEnumString]) {
-            formattedNumber = [self.phoneUtil format:number numberFormat:NBEPhoneNumberFormatINTERNATIONAL error:&err];
+            formattedNumber = [phoneUtil format:number numberFormat:NBEPhoneNumberFormatINTERNATIONAL error:&err];
         } else if([@"E164" isEqualToString:formatEnumString]) {
-            formattedNumber = [self.phoneUtil format:number numberFormat:NBEPhoneNumberFormatE164 error:&err];
+            formattedNumber = [phoneUtil format:number numberFormat:NBEPhoneNumberFormatE164 error:&err];
         } else if([@"RFC3966" isEqualToString:formatEnumString]) {
-            formattedNumber = [self.phoneUtil format:number numberFormat:NBEPhoneNumberFormatRFC3966 error:&err];
+            formattedNumber = [phoneUtil format:number numberFormat:NBEPhoneNumberFormatRFC3966 error:&err];
         }
 
         if (err != nil ) {
