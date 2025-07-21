@@ -13,7 +13,7 @@
                                                                 binaryMessenger:[registrar messenger]];
     
     LibphonenumberPlugin* instance = [[LibphonenumberPlugin alloc] init];
-    instance.phoneUtil = [[NBPhoneNumberUtil alloc] init];
+    instance.phoneUtil = [[NBPhoneNumberUtil alloc] init];  // ✅ Correct initialization
     
     [registrar addMethodCallDelegate:instance channel:channel];
 }
@@ -26,7 +26,6 @@
     NSString *formatEnumString = call.arguments[@"format"];
     NBPhoneNumber *number = nil;
 
-    // Call formatAsYouType before parse below because a partial number will not be parsable.
     if ([@"formatAsYouType" isEqualToString:call.method]) {
         NBAsYouTypeFormatter *f = [[NBAsYouTypeFormatter alloc] initWithRegionCode:isoCode];
         result([f inputString:phoneNumber]);
@@ -54,7 +53,6 @@
                                        details:nil]);
             return;
         }
-          
         result(normalizedNumber);
     } else if ([@"getRegionInfo" isEqualToString:call.method]) {
         NSString *regionCode = [self.phoneUtil getRegionCodeForNumber:number];
@@ -68,7 +66,6 @@
                                        details:nil]);
             return;
         }
-        
         result(@{
                  @"isoCode": regionCode == nil ? @"" : regionCode,
                  @"regionCode": countryCode == nil ? @"" : [countryCode stringValue],
@@ -78,15 +75,14 @@
          NBPhoneNumber *exampleNumber = [self.phoneUtil getExampleNumber:isoCode error:&err];
          NSString *regionCode = [self.phoneUtil getRegionCodeForNumber:exampleNumber];
          NSString *formattedNumber = [self.phoneUtil format:exampleNumber
-                                                       numberFormat:NBEPhoneNumberFormatNATIONAL
-                                                              error:&err];
+                                              numberFormat:NBEPhoneNumberFormatNATIONAL
+                                                     error:&err];
          if (err != nil ) {
              result([FlutterError errorWithCode:@"invalid_national_number"
                                         message:@"Invalid phone number for the country specified"
                                         details:nil]);
              return;
          }
-
          result(@{
                   @"isoCode": regionCode == nil ? @"" : regionCode,
                   @"formattedPhoneNumber": formattedNumber == nil ? @"" : formattedNumber,
@@ -95,7 +91,7 @@
         NSNumber *numberType = [NSNumber numberWithInteger:[self.phoneUtil getNumberType:number]];
         result(numberType);
     } else if ([@"getNameForNumber" isEqualToString:call.method]) {
-        NSString *name = @"";
+        NSString *name = @"";  // Placeholder, actual implementation required if needed.
         result(name);
     } else if ([@"format" isEqualToString:call.method]) {
         NSString *formattedNumber;
@@ -110,7 +106,7 @@
         }
 
         if (err != nil ) {
-            result([FlutterError errorWithCode:[NSString stringWithFormat:@"Error %ld", err.code]
+            result([FlutterError errorWithCode:[NSString stringWithFormat:@"Error %ld", (long)err.code]
                                        message:err.domain
                                        details:err.localizedDescription]);
             return;
