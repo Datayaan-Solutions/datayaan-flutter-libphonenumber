@@ -13,7 +13,7 @@
                                                                 binaryMessenger:[registrar messenger]];
     
     LibphonenumberPlugin* instance = [[LibphonenumberPlugin alloc] init];
-    instance.phoneUtil = [[NBPhoneNumberUtil alloc] init];  // ✅ Correct initialization
+    instance.phoneUtil = [[NBPhoneNumberUtil alloc] init];  // ✅ This should work for most versions
     
     [registrar addMethodCallDelegate:instance channel:channel];
 }
